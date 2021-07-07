@@ -1,0 +1,99 @@
+Question 1
+We want to understand more about the movies that families are watching. The following categories are considered family movies: Animation, Children, Classics, Comedy, Family and Music.
+Create a query that lists each movie, the film category it is classified in, and the number of times it has been rented out.
+
+SELECT category.name as category_name, 
+      COUNT(rental.rental_id) as count_of_rentals
+FROM  film
+JOIN inventory 
+ON film.film_id=inventory.film_id 
+JOIN  rental
+ON  inventory.inventory_id=rental.inventory_id
+JOIN film_category
+ON film.film_id=film_category.film_id
+JOIN category 
+ON  film_category.category_id=category.category_id
+WHERE category.name IN ('Animation', 'Children', 'Classics', 'Comedy',' Family', 'Music')
+GROUP BY category.name
+ORDER BY category.name;
+
+
+
+
+
+
+
+Question 2
+Now we need to know how the length of rental duration of these family-friendly movies compares to the duration that all movies are rented for. Can you provide a table with the movie titles and divide them into 4 levels (first_quarter, second_quarter, third_quarter, and final_quarter) based on the quartiles (25%, 50%, 75%) of the rental duration for movies across all categories? Make sure to also indicate the category that these family-friendly movies fall into.
+WITH base as ( SELECT film.rental_duration as rental_duration,
+ NTILE(4) OVER (ORDER BY rental_duration) AS standard_quartile
+ FROM film 
+ JOIN film_category
+ ON film.film_id = film_category.film_id 
+ JOIN category
+ ON film_category.category_id = category.category_id
+ GROUP BY
+  film.rental_duration)
+
+  SELECT avg(rental_duration), standard_quartile from base group 
+ by standard_quartile;
+
+
+
+
+
+
+
+Question 3
+
+Finally, provide a table with the family-friendly film category, each of the quartiles, and the corresponding count of movies within each combination of film category for each corresponding rental duration category. The resulting table should have three columns:
+•	Category
+•	Rental length category
+•	Count
+
+ WITH t1 AS (SELECT c.name,
+     NTILE (4) OVER (ORDER BY rental_duration) as standard_quartile
+ FROM film f  
+ JOIN film_category fc
+ ON fc.film_id = f.film_id
+ JOIN category c
+ ON c.category_id = fc.category_id
+ WHERE c.name IN ( 'Animation','Children','Classics','Comedy','Family','Music'))
+
+ SELECT name,standard_quartile, Count(name) AS count
+ FROM t1
+ GROUP BY 1,2
+ ORDER BY 1,2;
+
+
+
+
+
+Question 4
+Using the length ranking of the film as 1, display the length for each film rating. The   resulting table should have five columns :
+•	Film_id
+•	Title
+•	Rating	
+•	Length
+•	Length_rank
+
+
+WITH t2 AS (
+SELECT film_id,
+  title,
+  rating,
+  length,
+  RANK() OVER (
+    PARTITION BY rating 
+    ORDER BY length DESC)
+     length_rank
+  FROM  film
+)
+SELECT *
+FROM t2
+WHERE length_rank = 1 ;
+
+                 
+
+
+
